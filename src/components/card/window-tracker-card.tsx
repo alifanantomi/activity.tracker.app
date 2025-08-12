@@ -17,7 +17,7 @@ export function WindowTracker({ loadChartData }: { loadChartData: () => void }) 
   const [activeSessions, setActiveSessions] = useState<AppSession[]>([]);
   const [registeredApps] = useState<string[]>(default_apps);
   const [isTracking, setIsTracking] = useState<boolean>(false);
-  const [totalActiveTime, setTotalActiveTime] = useState<number>(0);
+  // const [totalActiveTime, setTotalActiveTime] = useState<number>(0);
 
   const pollIntervalMs = 1000;
   const pollRef = useRef<number | null>(null);
@@ -58,8 +58,8 @@ export function WindowTracker({ loadChartData }: { loadChartData: () => void }) 
       setActiveSessions(sessions);
       
       // Calculate total active time
-      const total = sessions.reduce((sum, session) => sum + session.total_seconds, 0);
-      setTotalActiveTime(total);
+      // const total = sessions.reduce((sum, session) => sum + session.total_seconds, 0);
+      // setTotalActiveTime(total);
     } catch (err) {
       console.error("fetch active sessions error", err);
     }
