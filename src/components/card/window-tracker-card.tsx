@@ -11,14 +11,13 @@ import {
 } from "../ui/card";
 import { Button } from "../ui/button";
 
-const default_apps = ["Code.exe"]
+const default_apps = ["Code.exe", "CivilizationVI.exe", "Discord.exe"]
 
-export function WindowTracker() {
+export function WindowTracker({ loadChartData }: { loadChartData: () => void }) {
   const [activeSessions, setActiveSessions] = useState<AppSession[]>([]);
   const [registeredApps] = useState<string[]>(default_apps);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [totalActiveTime, setTotalActiveTime] = useState<number>(0);
-  const [hasStarted, setHasStarted] = useState(false); 
 
   const pollIntervalMs = 1000;
   const pollRef = useRef<number | null>(null);
@@ -32,16 +31,6 @@ export function WindowTracker() {
     total_seconds: number;
     date: string;
   };
-
-  useEffect(() => {
-    // Prevent double-start in development
-    if (!hasStarted) {
-      setHasStarted(true);
-      startAutoTracking();
-    }
-    
-    return () => stopAllTracking();
-  }, [hasStarted]);
 
   useEffect(() => {
     startAutoTracking();
@@ -82,6 +71,7 @@ export function WindowTracker() {
       pollRef.current = null;
     }
     invoke("stop_tracking").catch(console.error);
+    loadChartData()
     setIsTracking(false);
   }
 
@@ -115,9 +105,8 @@ export function WindowTracker() {
           <CardDescription>
             Current Activity
           </CardDescription>
-          <CardTitle className="w-full flex justify-between items-center">
+          <CardTitle>
             <span>{registeredApps.join(", ")}</span>
-            <span>{formatTime(totalActiveTime, true)}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -131,7 +120,6 @@ export function WindowTracker() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Currently Running Sessions</h4>
             {activeSessions.length > 0 ? (
               <div className="space-y-2">
                 {activeSessions
@@ -142,7 +130,7 @@ export function WindowTracker() {
                         <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         <div>
                           <div className="font-medium">{session.exe_name}</div>
-                          <span className={`text-xs px-2 py-1 rounded border ${getCategoryColor(session.category)}`}>
+                          <span className={`capitalize text-xs px-2 py-1 rounded border ${getCategoryColor(session.category)}`}>
                             {session.category}
                           </span>
                         </div>

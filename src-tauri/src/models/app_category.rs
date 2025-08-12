@@ -12,5 +12,6 @@ pub fn get_default_categories() -> HashMap<String, String> {
   let mut categories = HashMap::new();
   categories.insert("Code.exe".to_string(), "productivity".to_string());
   categories.insert("Discord.exe".to_string(), "entertainment".to_string());
+  categories.insert("CivilizationVI.exe".to_string(), "entertainment".to_string());
   categories
 }

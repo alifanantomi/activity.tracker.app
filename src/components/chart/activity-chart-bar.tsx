@@ -1,80 +1,100 @@
 "use client"
 
-import { invoke } from "@tauri-apps/api/tauri";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import {
   type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartContainer
 } from "@/components/ui/chart"
+import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 
 export const description = "A stacked bar chart with a legend"
 
+type ChartRow = {
+  hour: string
+  utilities: number
+  entertainment: number
+  productivity: number
+}
+
+type CategoryValue = {
+  label: string
+  value: number      // raw minutes (numeric for logic)
+  display: string    // formatted time string
+}
+
 const chartConfig = {
-  utilities: {
-    label: "Utilities",
+  productivity: {
+    label: "Productivity",
     color: "var(--chart-1)",
   },
-  entertaintment: {
+  entertainment: {
     label: "Entertainment",
     color: "var(--chart-2)",
   },
-  productivity: {
-    label: "Productivity & Finance",
-    color: "var(--chart-3)",
-  },
 } satisfies ChartConfig
 
-// Updated ActivityChartBar to use real data
-export function ActivityChartBar({ date = "today" }: { date?: string }) {
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [totalTime, setTotalTime] = useState("");
-  const [loading, setLoading] = useState(true);
+export function ActivityChartBar({
+  chartData,
+  totalTime,
+  loading,
+  date
+} : {
+  chartData: ChartRow[],
+  totalTime: string,
+  loading: boolean,
+  date: string
+}) {
+  const [categoriesValue, setCategoriesValue] = useState<CategoryValue[]>()
+
+  const sumAndFormat = (data: ChartRow[]): CategoryValue[] | null => {
+    if (!data.length) return null;
+
+    const keys = Object.keys(data[0])
+      .filter(k => k !== "hour") as (keyof Omit<ChartRow, "hour">)[]
+
+    const result = keys.map(key => {
+      const totalMinutes = data.reduce((sum, row) => sum + (row[key] || 0), 0);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      const timeFormat = `${hours}h ${minutes}m`;
+
+      return {
+        label: key,
+        value: totalMinutes, // keep numeric for comparisons
+        display: timeFormat, // store formatted string separately
+      };
+    });
+
+    setCategoriesValue(result);
+    return result;
+  }
 
   useEffect(() => {
-    loadChartData();
-  }, [date]);
-
-  async function loadChartData() {
-    try {
-      setLoading(true);
-      const dateStr = date === "today" ? new Date().toISOString().split('T')[0] : date;
-      
-      const hourlyData = await invoke<[string, number, number, number][]>("get_chart_data_for_date", { date: dateStr });
-      
-      const formattedData = hourlyData.map(([hour, utilities, entertainment, productivity]) => ({
-        hour,
-        utilities,
-        entertainment: entertainment,
-        productivity
-      }));
-      
-      setChartData(formattedData);
-      
-      // Calculate total time
-      const total = hourlyData.reduce((sum, [, u, e, p]) => sum + u + e + p, 0);
-      const hours = Math.floor(total / 60);
-      const minutes = total % 60;
-      setTotalTime(`${hours}h ${minutes}m`);
-      
-    } catch (err) {
-      console.error("Failed to load chart data:", err);
-    } finally {
-      setLoading(false);
+    if (chartData) {
+      sumAndFormat(chartData)
     }
-  }
+  }, [chartData])
+
+  const colorCategories = (val: string) => {    
+    const colorMap: { label: string; value: string }[] = [
+      { label: 'productivity', value: 'chart-1' },
+      { label: 'entertainment', value: 'chart-2' },
+    ];
+    
+    const match = colorMap.find(item => item.label === val);
+    return match ? `text-${match.value}` : "";
+  };
+
 
   if (loading) {
     return <Card><CardContent className="p-8 text-center">Loading...</CardContent></Card>;
@@ -98,19 +118,11 @@ export function ActivityChartBar({ date = "today" }: { date?: string }) {
               tickMargin={10}
               axisLine={false}
             />
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar
-              dataKey="utilities"
-              stackId="a"
-              fill="var(--color-utilities)"
-              radius={[0, 0, 4, 4]}
-            />
             <Bar
               dataKey="entertainment"
               stackId="a"
               fill="var(--color-entertainment)"
-              radius={[0, 0, 0, 0]}
+              radius={[0, 0, 4, 4]}
             />
             <Bar
               dataKey="productivity"
@@ -121,6 +133,20 @@ export function ActivityChartBar({ date = "today" }: { date?: string }) {
           </BarChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="w-full flex gap-4 items-center">
+          {categoriesValue && categoriesValue.map((item, index) => (
+            item.value > 0 && (
+              <div key={index} className="grid">
+                <span className={cn("font-medium capitalize text-sm", colorCategories(item.label))}>
+                  {item.label}
+                </span>
+                <span className="text-sm text-muted-foreground">{item.display}</span>
+              </div>
+            )
+          ))}
+        </div>
+      </CardFooter>
     </Card>
   );
 }
