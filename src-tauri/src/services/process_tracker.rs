@@ -57,6 +57,9 @@ pub fn start_process_tracking_loop(state: State<AppState>) {
                 if registered.contains(&exe_name.to_string()) {
                     running_apps.insert(exe_name.to_string());
                 }
+                // if !exe_name.is_empty() {
+                //     running_apps.insert(exe_name.to_string());
+                // }
             }
 
             let mut sessions_guard = sessions.lock().unwrap();

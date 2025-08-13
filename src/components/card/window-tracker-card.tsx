@@ -10,27 +10,26 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { type AppSession } from "@/App";
 
-const default_apps = ["Code.exe", "CivilizationVI.exe", "Discord.exe"]
+const default_apps = ["Code.exe", "CivilizationVI.exe", "Discord.exe", "javaw.exe"]
 
-export function WindowTracker({ loadChartData }: { loadChartData: () => void }) {
-  const [activeSessions, setActiveSessions] = useState<AppSession[]>([]);
+export function WindowTracker({ 
+  activeSessions, 
+  fetchActiveSessions,
+  loadChartData,
+}: { 
+  activeSessions: AppSession[]
+  fetchActiveSessions: () => void 
+  loadChartData: () => void 
+}) {
   const [registeredApps] = useState<string[]>(default_apps);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   // const [totalActiveTime, setTotalActiveTime] = useState<number>(0);
 
   const pollIntervalMs = 1000;
   const pollRef = useRef<number | null>(null);
-
-  type AppSession = {
-    id: string;
-    exe_name: string;
-    category: string;
-    start_time: string;
-    end_time?: string;
-    total_seconds: number;
-    date: string;
-  };
 
   useEffect(() => {
     startAutoTracking();
@@ -49,19 +48,6 @@ export function WindowTracker({ loadChartData }: { loadChartData: () => void }) 
       }
     } catch (err) {
       console.error("Auto-tracking start error", err);
-    }
-  }
-
-  async function fetchActiveSessions() {
-    try {
-      const sessions = await invoke<AppSession[]>("get_active_sessions");
-      setActiveSessions(sessions);
-      
-      // Calculate total active time
-      // const total = sessions.reduce((sum, session) => sum + session.total_seconds, 0);
-      // setTotalActiveTime(total);
-    } catch (err) {
-      console.error("fetch active sessions error", err);
     }
   }
 
@@ -87,15 +73,6 @@ export function WindowTracker({ loadChartData }: { loadChartData: () => void }) 
     if (hrs > 0) return `${hrs}h ${mins}m`;
     if (mins > 0) return `${mins}m ${secs}s`;
     return `${secs}s`;
-  }
-
-  function getCategoryColor(category: string) {
-    switch (category) {
-      case 'productivity': return 'bg-green-100 text-green-800 border-green-200';
-      case 'entertainment': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'utilities': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
   }
 
   return (
@@ -127,16 +104,13 @@ export function WindowTracker({ loadChartData }: { loadChartData: () => void }) 
                   .map((session) => (
                     <div key={session.id} className="flex justify-between items-center p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         <div>
                           <div className="font-medium">{session.exe_name}</div>
-                          <span className={`capitalize text-xs px-2 py-1 rounded border ${getCategoryColor(session.category)}`}>
-                            {session.category}
-                          </span>
+                          <Badge variant="outline" className="capitalize">{session.category}</Badge>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-mono text-lg">{formatTime(session.total_seconds, true)}</div>
+                        <div className="font-mono">{formatTime(session.total_seconds, true)}</div>
                         <div className="text-xs text-gray-500">
                           Started: {new Date(session.start_time).toLocaleTimeString()}
                         </div>

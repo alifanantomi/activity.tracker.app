@@ -13,5 +13,6 @@ pub fn get_default_categories() -> HashMap<String, String> {
   categories.insert("Code.exe".to_string(), "productivity".to_string());
   categories.insert("Discord.exe".to_string(), "entertainment".to_string());
   categories.insert("CivilizationVI.exe".to_string(), "entertainment".to_string());
+  categories.insert("javaw.exe".to_string(), "entertainment".to_string());
   categories
 }

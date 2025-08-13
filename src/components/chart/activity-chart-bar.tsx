@@ -122,13 +122,11 @@ export function ActivityChartBar({
               dataKey="entertainment"
               stackId="a"
               fill="var(--color-entertainment)"
-              radius={[0, 0, 4, 4]}
             />
             <Bar
               dataKey="productivity"
               stackId="a"
               fill="var(--color-productivity)"
-              radius={[4, 4, 0, 0]}
             />
           </BarChart>
         </ChartContainer>
